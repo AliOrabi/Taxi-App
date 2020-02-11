@@ -17,7 +17,7 @@ class TripAdmin(admin.ModelAdmin):
     )
 
     list_display = (
-        'id', 'pick_up_address', 'drop_off_address', 'status',
+        'id', 'pick_up_address', 'drop_off_address', 'status', 'driver', 'rider',
         'created', 'updated',
     )
 

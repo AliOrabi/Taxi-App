@@ -7,6 +7,8 @@ from django.contrib.auth import get_user_model
 from channels.db import database_sync_to_async
 from rest_framework_simplejwt.tokens import AccessToken
 
+from django.contrib.auth.models import Group
+
 TEST_CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
@@ -15,11 +17,16 @@ TEST_CHANNEL_LAYERS = {
 
 
 @database_sync_to_async
-def create_user(username, password):
+def create_user(username, password, group='rider'):
     user = get_user_model().objects.create_user(
         username=username,
         password=password
     )
+
+    user_group, _ = Group.objects.get_or_create(name=group)
+    user.groups.add(user_group)
+    user.save()
+
     access = AccessToken.for_user(user)
     return user, access
 
@@ -59,29 +66,6 @@ class TestWebSocket:
         assert message == response
         await communicator.disconnect()
 
-    async def test_can_send_and_receive_broadcast_messaged(self, settings):
-        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
-        _, access = await create_user(
-            'user', 'pAssw0rd'
-        )
-        communicator = WebsocketCommunicator(
-            application=application,
-            path=f'/taxi/?token={access}'
-        )
-        connected, _ = await communicator.connect()
-
-        message = {
-            'type': 'echo.message',
-            'data': 'This is a test message.',
-        }
-        channel_layer = get_channel_layer()
-
-        await channel_layer.group_send('test', message=message)
-        response = await communicator.receive_json_from()
-
-        assert response == message
-        await communicator.disconnect()
-
     async def test_cannot_connect_to_socket(self, settings):
         settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
         communicator = WebsocketCommunicator(
@@ -90,3 +74,55 @@ class TestWebSocket:
         )
         connected, _ = await communicator.connect()
         assert connected is False
+
+    async def test_join_driver_pool(self, settings):
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        _, access = await create_user('test', 'password', 'driver')
+
+        communicator = WebsocketCommunicator(
+            application=application,
+            path=f'/taxi/?token={access}'
+        )
+        connected, _ = await communicator.connect()
+        message = {
+            'type': 'echo.message',
+            'data': 'This is a test message.',
+        }
+        channel_layer = get_channel_layer()
+        await channel_layer.group_send('drivers', message=message)
+        response = await communicator.receive_json_from()
+        assert message == response
+        await communicator.disconnect()
+
+    async def test_request_trip(self, settings):
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        user, access = await create_user(
+            'test', 'password', 'rider'
+        )
+
+        communicator = WebsocketCommunicator(
+            application=application,
+            path=f'/taxi/?token={access}'
+        )
+
+        connected, _ = await communicator.connect()
+        await communicator.send_json_to({
+            'type': 'create.trip',
+            'data': {
+                'pick_up_address': 'Wesola 12',
+                'drop_off_address': 'Kazanska 10',
+                'rider': user.id
+            },
+        })
+
+        response = await communicator.receive_json_from()
+        response_data = response.get('data')
+
+        assert response_data['id'] is not None
+        assert response_data['pick_up_address'] == 'Wesola 12'
+        assert response_data['drop_off_address'] == 'Kazanska 10'
+        assert response_data['status'] == 'REQUESTED'
+        assert response_data['rider']['username'] == user.username
+        assert response_data['driver'] is None
+
+        await communicator.disconnect()

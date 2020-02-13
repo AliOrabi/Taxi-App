@@ -6,7 +6,11 @@ from django.conf import settings
 
 
 class User(AbstractUser):
-    pass
+    # group = property(group) <= getter
+    @property
+    def group(self):
+        groups = self.groups.all()
+        return groups[0].name if groups else None
 
 
 class Trip(models.Model):
@@ -38,11 +42,11 @@ class Trip(models.Model):
     )
 
     rider = models.ForeignKey(
-       settings.AUTH_USER_MODEL,
-       null=True,
-       blank=True,
-       on_delete=models.DO_NOTHING,
-       related_name='trips_as_rider',
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name='trips_as_rider',
     )
 
     def __str__(self):

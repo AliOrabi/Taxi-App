@@ -249,3 +249,84 @@ class TestWebSocket:
         assert response == message
 
         await communicator.disconnect()
+
+    async def test_driver_can_update_trip(self, settings):
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+
+        rider, _ = await create_user(
+            'test_rider', 'password', 'rider'
+        )
+
+        trip = await create_trip(rider=rider)
+        trip_id = f'{trip.id}'
+
+        channel_layer = get_channel_layer()
+        await channel_layer.group_add(
+            group=trip_id,
+            channel='test_channel'
+        )
+
+        # Update trip
+        driver, access = await create_user(
+            'test_driver', 'password', 'driver'
+        )
+
+        communicator = WebsocketCommunicator(
+            application=application,
+            path=f'/taxi/?token={access}'
+        )
+
+        connected, _ = await communicator.connect()
+
+        message = {
+            'type': 'update.trip',
+            'data': {
+                'id': trip_id,
+                'pick_up_address': trip.pick_up_address,
+                'drop_off_address': trip.drop_off_address,
+                'status': trip.status,
+                'driver': driver.id
+            }
+        }
+
+        await communicator.send_json_to(message)
+
+        # Rider receives message confirmation
+        response = await channel_layer.receive('test_channel')
+        response_data = response.get('data')
+
+        assert response_data['id'] == trip_id
+        assert response_data['rider']['username'] == rider.username
+        assert response_data['driver']['username'] == driver.username
+
+        await communicator.disconnect()
+
+    async def test_driver_join_trip_group_on_connect(self, settings):
+        settings.CHANNEL_LAYERS = TEST_CHANNEL_LAYERS
+        user, access = await create_user(
+            'test', 'password', 'driver'
+        )
+
+        trip = await create_trip(driver=user)
+
+        communicator = WebsocketCommunicator(
+            application=application,
+            path=f'/taxi/?token={access}'
+        )
+
+        connected, _ = await communicator.connect()
+
+        message = {
+            'type': 'echo.message',
+            'data': 'This is a test message',
+        }
+
+        channel_layer = get_channel_layer()
+        await channel_layer.group_send(f'{trip.id}', message=message)
+
+        # Rider receives message
+        response = await communicator.receive_json_from()
+
+        assert response == message
+
+        await communicator.disconnect()

@@ -6,6 +6,7 @@ from django.conf import settings
 
 
 class User(AbstractUser):
+    photo = models.ImageField(upload_to='photos', null=True, blank=True)
     # group = property(group) <= getter
     @property
     def group(self):

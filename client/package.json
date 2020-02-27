@@ -38,6 +38,7 @@
     ]
   },
   "devDependencies": {
-    "cypress": "^4.0.2"
+    "cypress": "^4.0.2",
+    "cypress-file-upload": "^3.5.3"
   }
 }

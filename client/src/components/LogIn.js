@@ -41,6 +41,7 @@ function LogIn(props) {
                       <Form.Control
                         name='username'
                         onChange={handleChange}
+                        value={values.username}
                       />
                     </Form.Group>
                     <Form.Group controlId='password'>
@@ -49,6 +50,7 @@ function LogIn(props) {
                         name='password'
                         onChange={handleChange}
                         type='password'
+                        value={values.password}
                       />
                     </Form.Group>
                     <Button block type='submit' variant='primary'>Log in</Button>

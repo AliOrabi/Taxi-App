@@ -11,7 +11,7 @@ function SignUp(props) {
   const onSubmit = (values, actions) => setSubmitted(true);
 
   if (isSubmitted) {
-    return <Redirect to='/log-in' />
+      return <Redirect to='/log-in' />
   }
 
   return (

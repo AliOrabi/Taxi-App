@@ -1,19 +1,19 @@
 const logIn = () => {
-    const { username, password } = Cypress.env('credentials')
+    const {username, password} = Cypress.env('credentials')
     cy.server()
     cy.route({
         method: 'POST',
         url: '**/api/log_in/**',
-        status: 200,
-        response: {
-            'access': 'ACCESS_TOKEN',
-            'refresh': 'REFRESH_TOKEN'
-        }
+        // status: 200,
+        // response: {
+        //     'access': 'ACCESS_TOKEN',
+        //     'refresh': 'REFRESH_TOKEN'
+        // }
     }).as('logIn');
 
     cy.visit('/#/log-in');
     cy.get('input#username').type(username);
-    cy.get('input#password').type(password, { log: false });
+    cy.get('input#password').type(password, {log: false});
     cy.get('button').contains('Log in').click();
     cy.wait('@logIn');
 };
@@ -24,22 +24,22 @@ describe('Authentication', function () {
         cy.route({
             method: 'POST',
             url: '**/api/sign_up/**',
-            status: 201,
-            response: {
-                'id': 1,
-                'username': 'user-test',
-                'first_name': 'user-firstname',
-                'last_name': 'user-lastname',
-                'group': 'driver',
-                'photo': '/media/images/photo.jpg'
-            }
+            // status: 201,
+            // response: {
+            //     'id': 1,
+            //     'username': 'user-test',
+            //     'first_name': 'user-firstname',
+            //     'last_name': 'user-lastname',
+            //     'group': 'driver',
+            //     'photo': '/media/images/photo.jpg'
+            // }
         }).as('signUp');
 
         cy.visit('/#/sign-up');
-        cy.get('input#username').type('user-test');
-        cy.get('input#firstName').type('user-firstname');
-        cy.get('input#lastName').type('user-lastname');
-        cy.get('input#password').type('PASSWORD2', { log: false });
+        cy.get('input#username').type('mateusz');
+        cy.get('input#firstName').type('Mateusz');
+        cy.get('input#lastName').type('Kowalski');
+        cy.get('input#password').type('passWORD', {log: false});
         cy.get('select#group').select('driver');
 
         cy.fixture('images/photo.jpg').then(photo => {
@@ -59,22 +59,22 @@ describe('Authentication', function () {
         cy.route({
             method: 'POST',
             url: '**/api/sign_up/**',
-            status: 400,
-            response: {
-                'username': [
-                    'A user with that username already exists.'
-                ],
-                'lastName': [
-                    'An invalid lastName.'
-                ]
-            }
+            // status: 400,
+            // response: {
+            //     'username': [
+            //         'A user with that username already exists.'
+            //     ],
+            //     'lastName': [
+            //         'An invalid lastName.'
+            //     ]
+            // }
         }).as('signUp');
 
         cy.visit('/#/sign-up');
-        cy.get('input#username').type('user-test');
+        cy.get('input#username').type('mateusz');
         cy.get('input#firstName').type('user-firstname');
         cy.get('input#lastName').type('user-lastname');
-        cy.get('input#password').type('PASSWORD2', { log: false });
+        cy.get('input#password').type('PASSWORD2', {log: false});
         cy.get('select#group').select('driver');
 
         cy.fixture('images/photo.jpg').then(photo => {
@@ -89,12 +89,9 @@ describe('Authentication', function () {
         cy.get('div.invalid-feedback').contains(
             'A user with that username already exists.'
         );
-        cy.get('div.invalid-feedback').contains(
-           'An invalid lastName.' 
-        );
         cy.hash().should('eq', '#/sign-up');
     });
-    
+
 
     it('Can log in.', function () {
         logIn();
@@ -120,29 +117,26 @@ describe('Authentication', function () {
     });
 
     it('Shows an alert on login error', function () {
-        const { username, password } = Cypress.env('credentials');
-
         cy.server();
         cy.route({
             method: 'POST',
             url: '**/api/log_in/**',
-            status: 400,
-            response: {
-                '__all__': [
-                    'Please enter a correct username and password. ' +
-                    'Note that both fields may be case-sensitive.'
-                ]
-            }
+            // status: 400,
+            // response: {
+            //     '__all__': [
+            //         'Please enter a correct username and password. ' +
+            //         'Note that both fields may be case-sensitive.'
+            //     ]
+            // }
         }).as('logIn');
 
         cy.visit('/#/log-in');
-        cy.get('input#username').type(username);
-        cy.get('input#password').type(password, { log: false });
+        cy.get('input#username').type('zlylogin');
+        cy.get('input#password').type('passwd', {log: false});
         cy.get('button').contains('Log in').click();
         cy.wait('@logIn');
         cy.get('div.alert').contains(
-            'Please enter a correct username and password. ' +
-            'Note that both fields may be case-sensitive.'
+            'No active account found with the given credentials'
         );
         cy.hash().should('eq', '#/log-in');
     });

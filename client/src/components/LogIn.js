@@ -12,7 +12,10 @@ function LogIn({ logIn }) {
       if (isError) {
         const data = response.response.data;
         for (const value in data) {
-          actions.setFieldError(value, data[value].join(' '));
+          if (typeof data[value] === 'string')
+            actions.setFieldError(value, data[value]);
+          else
+            actions.setFieldError(value, data[value].join(''));
         }
       }
     }
@@ -49,28 +52,42 @@ function LogIn({ logIn }) {
               }) => (
                   <>
                     {
-                      '__all__' in errors &&
+                      'detail' in errors &&
                       <Alert variant='danger'>
-                        {errors['__all__']}
+                        {errors['detail']}
                       </Alert>
                     }
                     <Form noValidate onSubmit={(handleSubmit)}>
                       <Form.Group controlId='username'>
                         <Form.Label>Username:</Form.Label>
                         <Form.Control
+                          className={'username' in errors ? 'is-invalid' : ''}
                           name='username'
                           onChange={handleChange}
                           value={values.username}
                         />
+                        {
+                          'username' in errors &&
+                          <Form.Control.Feedback type='invalid'>
+                            {errors.username}
+                          </Form.Control.Feedback>
+                        }
                       </Form.Group>
                       <Form.Group controlId='password'>
                         <Form.Label>Password:</Form.Label>
                         <Form.Control
+                          className={'password' in errors ? 'is-invalid' : ''}
                           name='password'
                           onChange={handleChange}
                           type='password'
                           value={values.password}
                         />
+                        {
+                          'password' in errors &&
+                          <Form.Control.Feedback type='invalid'>
+                            {errors.password}
+                          </Form.Control.Feedback>
+                        }
                       </Form.Group>
                       <Button
                         block

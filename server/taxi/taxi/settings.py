@@ -23,7 +23,7 @@ SECRET_KEY = 'u99a^4hsr^*2_q%enkn@4ew1=9^j*u#!dw*yj4z%-xp(@uli$r'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -119,7 +119,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = '/static/'
 AUTH_USER_MODEL = 'trips.User'
 
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
@@ -147,3 +146,6 @@ SIMPLE_JWT = {
 
 MEDIA_ROOT = os.path.join(BASE_DIR, '../media')
 MEDIA_URL = '/media/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, '../static')
+STATIC_URL = '/staticfiles/'

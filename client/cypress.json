@@ -5,6 +5,13 @@
         "credentials": {
             "username": "mateusz",
             "password": "passWORD"
+        },
+        "database": {
+            "host": "localhost",
+            "user": "taxi",
+            "password": "taxi",
+            "database": "taxi",
+            "port": "5433"
         }
     }
 }
